@@ -101,7 +101,7 @@ def custom_standardization(input_string):
     return tf.strings.regex_replace(lowercase, "[%s]" % re.escape(strip_chars), "")
 
 
-def preprocess_text(VOCAB_SIZE, SEQ_LENGTH, text_data):
+def text_vectorization(VOCAB_SIZE, SEQ_LENGTH, text_data):
     vectorization = TextVectorization(
         max_tokens=VOCAB_SIZE,
         output_mode="int",
@@ -118,4 +118,53 @@ def preprocess_text(VOCAB_SIZE, SEQ_LENGTH, text_data):
             layers.RandomContrast(0.3),
         ]
     )
-    print("Done preprocessing text.")
+    return vectorization, image_augmentation
+
+
+def decode_and_resize(img_path):
+    img = tf.io.read_file(img_path)
+    img = tf.image.decode_jpeg(img, channels=3)
+    img = tf.image.resize(img, IMAGE_SIZE)
+    img = tf.image.convert_image_dtype(img, tf.float32)
+    return img
+
+
+def process_input(img_path, captions, vectorization):
+    return decode_and_resize(img_path), vectorization(captions)
+
+
+def make_dataset(images, captions, AUTOTUNE, BATCH_SIZE, vectorization):
+    if split == "train":
+        img_dataset = tf.data.Dataset.from_tensor_slices(images).map(
+            read_train_image, num_parallel_calls=AUTOTUNE
+        )
+    else:
+        img_dataset = tf.data.Dataset.from_tensor_slices(images).map(
+            read_valid_image, num_parallel_calls=AUTOTUNE
+        )
+
+    cap_dataset = tf.data.Dataset.from_tensor_slices(captions).map(
+        vectorization, num_parallel_calls=AUTOTUNE
+    )
+
+    dataset = tf.data.Dataset.zip((img_dataset, cap_dataset))
+    dataset = dataset.batch(BATCH_SIZE).shuffle(256).prefetch(AUTOTUNE)
+    return dataset
+
+
+
+
+
+def preprocess_text(VOCAB_SIZE, SEQ_LENGTH, text_data, AUTOTUNE, train_data, valid_data, BATCH_SIZE):
+        
+        vectorization, image_augmentation = text_vectorization(VOCAB_SIZE, SEQ_LENGTH, text_data)
+
+        
+        # Pass the list of images and the list of corresponding captions
+        train_dataset = make_dataset(list(train_data.keys()), list(train_data.values()), AUTOTUNE, BATCH_SIZE, vectorization)
+
+        valid_dataset = make_dataset(list(valid_data.keys()), list(valid_data.values()), AUTOTUNE, BATCH_SIZE, vectorization)
+
+
+            
+        print("Done preprocessing text.")
