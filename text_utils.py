@@ -34,7 +34,8 @@ def load_captions_data(filename, SEQ_LENGTH, IMAGES_PATH):
             # Each image is repeated five times for the five different captions.
             # Each image name has a suffix `#(caption_number)`
             img_name = img_name.split("#")[0]
-            img_name = os.path.join(IMAGES_PATH, img_name.strip())
+            img_name = os.path.join(
+                IMAGES_PATH, img_name.strip()).split('\\')[1]
 
             # We will remove caption that are either too short to too long
             tokens = caption.strip().split()
@@ -121,16 +122,16 @@ def text_vectorization(VOCAB_SIZE, SEQ_LENGTH, text_data):
     return vectorization, image_augmentation
 
 
-def decode_and_resize(img_path):
-    img = tf.io.read_file(img_path)
+def decode_and_resize(IMAGES_PATH, IMAGE_SIZE):
+    img = tf.io.read_file(IMAGES_PATH)
     img = tf.image.decode_jpeg(img, channels=3)
     img = tf.image.resize(img, IMAGE_SIZE)
     img = tf.image.convert_image_dtype(img, tf.float32)
     return img
 
 
-def process_input(img_path, captions, vectorization):
-    return decode_and_resize(img_path), vectorization(captions)
+def process_input(IMAGES_PATH, captions, vectorization, IMAGE_SIZE):
+    return decode_and_resize(IMAGES_PATH, IMAGE_SIZE), vectorization(captions)
 
 
 def make_dataset(images, captions, AUTOTUNE, BATCH_SIZE, vectorization):
@@ -152,19 +153,16 @@ def make_dataset(images, captions, AUTOTUNE, BATCH_SIZE, vectorization):
     return dataset
 
 
-
-
-
 def preprocess_text(VOCAB_SIZE, SEQ_LENGTH, text_data, AUTOTUNE, train_data, valid_data, BATCH_SIZE):
-        
-        vectorization, image_augmentation = text_vectorization(VOCAB_SIZE, SEQ_LENGTH, text_data)
 
-        
-        # Pass the list of images and the list of corresponding captions
-        train_dataset = make_dataset(list(train_data.keys()), list(train_data.values()), AUTOTUNE, BATCH_SIZE, vectorization)
+    vectorization, image_augmentation = text_vectorization(
+        VOCAB_SIZE, SEQ_LENGTH, text_data)
 
-        valid_dataset = make_dataset(list(valid_data.keys()), list(valid_data.values()), AUTOTUNE, BATCH_SIZE, vectorization)
+    # Pass the list of images and the list of corresponding captions
+    train_dataset = make_dataset(list(train_data.keys()), list(
+        train_data.values()), AUTOTUNE, BATCH_SIZE, vectorization)
 
+    valid_dataset = make_dataset(list(valid_data.keys()), list(
+        valid_data.values()), AUTOTUNE, BATCH_SIZE, vectorization)
 
-            
-        print("Done preprocessing text.")
+    print("Done preprocessing text.")
