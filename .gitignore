@@ -6,6 +6,8 @@ dataset/*
 models/*
 checkpoints/*
 testVideos/*
+original.ipynb
+main-copy.ipynb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
