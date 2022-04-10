@@ -55,15 +55,17 @@ def loss_function(real, pred):
 
 def train_RNN(epochs, start_epoch, ckpt_manager, num_steps,
               dataset, decoder, encoder, word_to_index):
+
     EPOCHS = epochs
     total_time = 0
+
     for epoch in range(start_epoch, EPOCHS):
         start = time.time()
         total_loss = 0
 
         for (batch, (img_tensor, target)) in enumerate(dataset):
-            batch_loss, t_loss = train_step(
-                img_tensor, target, decoder, encoder, word_to_index)
+            batch_loss, t_loss = train_step(img_tensor, target,
+                                            decoder, encoder, word_to_index)
             total_loss += t_loss
 
             if batch % 100 == 0:
