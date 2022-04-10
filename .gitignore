@@ -3,7 +3,7 @@
 *.zip
 *.npy
 dataset/*
-models/*
+saves/*
 checkpoints/*
 testVideos/*
 original.ipynb
