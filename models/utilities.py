@@ -87,43 +87,6 @@ def tokenization(train_captions, max_length, vocabulary_size):
     return word_to_index, index_to_word, tokenizer, cap_vector
 
 
-def evaluate(image, max_length, attention_features_shape, encoder, decoder,
-             image_features_extract_model, word_to_index, index_to_word):
-    attention_plot = np.zeros((max_length, attention_features_shape))
-
-    hidden = decoder.reset_state(batch_size=1)
-
-    temp_input = tf.expand_dims(load_image(image)[0], 0)
-
-    img_tensor_val = image_features_extract_model(temp_input)
-
-    img_tensor_val = tf.reshape(img_tensor_val, (img_tensor_val.shape[0],
-                                                 -1,
-                                                 img_tensor_val.shape[3]))
-    features = encoder(img_tensor_val)
-    dec_input = tf.expand_dims([word_to_index('<start>')], 0)
-    result = []
-
-    for i in range(max_length):
-        predictions, hidden, attention_weights = decoder(dec_input,
-                                                         features,
-                                                         hidden)
-
-        attention_plot[i] = tf.reshape(attention_weights, (-1, )).numpy()
-
-        predicted_id = tf.random.categorical(predictions, 1)[0][0].numpy()
-        predicted_word = tf.compat.as_text(index_to_word(predicted_id).numpy())
-        result.append(predicted_word)
-
-        if predicted_word == '<end>':
-            return result, attention_plot
-
-        dec_input = tf.expand_dims([predicted_id], 0)
-
-    attention_plot = attention_plot[:len(result), :]
-    return result, attention_plot
-
-
 def split_data(img_name_vector, cap_vector, percentage=0.8):
     img_to_cap_vector = collections.defaultdict(list)
     for img, cap in zip(img_name_vector, cap_vector):
