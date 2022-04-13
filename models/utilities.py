@@ -215,11 +215,11 @@ def make_dataset(img_name_train, cap_train):
 
 
 def save_dataset(img_name_train, cap_train, img_name_val, cap_val, tokens_shape):
-    pickle.dump(img_name_train, open(f'{save_path}img_name_train', "wb"))
-    pickle.dump(cap_train, open(f'{save_path}cap_train', "wb"))
-    pickle.dump(img_name_val, open(f'{save_path}img_name_val', "wb"))
-    pickle.dump(cap_val, open(f'{save_path}cap_val', "wb"))
-    pickle.dump(tokens_shape, open(f'{save_path}tokens_shape', "wb"))
+    pickle.dump(img_name_train, open(f"{save_path}img_name_train", "wb"))
+    pickle.dump(cap_train, open(f"{save_path}cap_train", "wb"))
+    pickle.dump(img_name_val, open(f"{save_path}img_name_val", "wb"))
+    pickle.dump(cap_val, open(f"{save_path}cap_val", "wb"))
+    pickle.dump(tokens_shape, open(f"{save_path}tokens_shape", "wb"))
 
 
 
