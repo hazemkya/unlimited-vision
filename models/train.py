@@ -1,3 +1,4 @@
+from numpy import Infinity
 import tensorflow as tf
 import time
 
@@ -53,35 +54,45 @@ def loss_function(real, pred):
     return tf.reduce_mean(loss_)
 
 
-def train_RNN(epochs, start_epoch, ckpt_manager, num_steps,
-              dataset, decoder, encoder, word_to_index):
+def train(epochs, start_epoch, ckpt_manager, num_steps,
+          dataset, decoder, encoder, word_to_index):
 
     EPOCHS = epochs
     total_time = 0
-
+    last_average_batch_loss = 10000
     for epoch in range(start_epoch, EPOCHS):
         start = time.time()
         total_loss = 0
-
+        current_average_batch_loss = 0
         for (batch, (img_tensor, target)) in enumerate(dataset):
             batch_loss, t_loss = train_step(img_tensor, target, decoder,
                                             encoder, word_to_index)
             total_loss += t_loss
 
             if batch % 100 == 0:
-                average_batch_loss = batch_loss.numpy()/int(target.shape[1])
+                current_average_batch_loss = batch_loss.numpy() / \
+                    int(target.shape[1])
                 print(
-                    f'Epoch {epoch+1} Batch {batch} Loss {average_batch_loss:.4f}')
+                    f'Epoch {epoch+1} Batch {batch} Loss {current_average_batch_loss:.4f}')
+
         # storing the epoch end loss value to plot later
         loss_plot.append(total_loss / num_steps)
 
-        if epoch % 5 == 0:
+        # save a checkpoint if the loss is better than the last saved loss
+        if current_average_batch_loss < last_average_batch_loss:
             ckpt_manager.save()
+            last_average_batch_loss = current_average_batch_loss
+            print("Chekpoint saved from compair")
+
+        ckpt_manager.save()
+        # if epoch % 2 == 0:
+        #     ckpt_manager.save()
+        #     print("Chekpoint saved from compair")
 
         print(f'Epoch {epoch+1} Loss {total_loss/num_steps:.6f}')
         print(f'Time taken for 1 epoch {time.time()-start:.2f} sec\n')
         total_time += time.time()-start
 
     print(f'Total time taken: {(total_time/60):.2f} min\n')
-    
+
     return loss_plot

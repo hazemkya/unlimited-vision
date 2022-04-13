@@ -1,4 +1,5 @@
 import os
+from sklearn.utils import shuffle
 import tensorflow as tf
 import numpy as np
 from PIL import Image
@@ -7,19 +8,26 @@ import json
 import collections
 import random
 
+import configparser
 
-def import_files():
-    # Download caption annotation files
+config = configparser.ConfigParser()
+config.read("config.ini")
+
+sample = int(config["config"]["sample"])
+
+
+def import_files(shuffle):
+
     annotation_file = 'dataset\coco\\tarin\captions_train2017.json'
     annotation_folder = '\dataset\coco\\annotations_trainval2017\\annotations\\'
 
-    # Download image files
     image_folder = '\dataset\coco\\tarin\images\\'
     PATH = os.path.abspath('.') + image_folder
 
     with open(annotation_file, 'r') as f:
         annotations = json.load(f)
-# Group all captions together having the same image ID.
+
+    # Group all captions together having the same image ID.
     image_path_to_caption = collections.defaultdict(list)
     for val in annotations['annotations']:
         caption = f"<start> {val['caption']} <end>"
@@ -27,14 +35,36 @@ def import_files():
         # image_path.replace("\\","/") #windows
         image_path_to_caption[image_path].append(caption)
 
-    return image_path_to_caption
+    # image_path_to_caption = [item.replace("\\","/") for item in image_path_to_caption] #windows
+    image_paths = list(image_path_to_caption.keys())
+
+    if shuffle:
+        random.shuffle(image_paths)
+
+    # Select the first sample image_paths from the shuffled set.
+    # Approximately each image id has 5 captions associated with it, so that will
+    train_image_paths = image_paths[:sample]
+
+    # train_image_paths = [item.replace("\\","/") for item in train_image_paths] #windows
+
+    print(len(train_image_paths))
+    # Download caption annotation files
+
+    return train_image_paths, image_path_to_caption
 
 
-def load_image(image_path):
+def load_image(image_path, format='jpeg'):
+    # load and pre-process an image
     img = tf.io.read_file(image_path)
-    img = tf.io.decode_jpeg(img, channels=3)
+
+    if format == "jpeg":
+        img = tf.io.decode_jpeg(img, channels=3)
+    elif format == "png":
+        img = tf.io.decode_png(img, channels=3)
+
     img = tf.keras.layers.Resizing(224, 224)(img)
     img = tf.keras.applications.resnet50.preprocess_input(img)
+
     return img, image_path
 
 
