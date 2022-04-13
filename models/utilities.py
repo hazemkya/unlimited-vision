@@ -108,6 +108,19 @@ def plot_attention(image, result, attention_plot):
     plt.show()
 
 
+def index_vocab(vocabulary):
+    # Create mappings for words to indices and indicies to words.
+    word_to_index = tf.keras.layers.StringLookup(
+        mask_token="",
+        vocabulary=vocabulary)
+    index_to_word = tf.keras.layers.StringLookup(
+        mask_token="",
+        vocabulary=vocabulary,
+        invert=True)
+
+    return word_to_index, index_to_word
+
+
 def tokenization(train_captions, max_length, vocabulary_size):
     caption_dataset = tf.data.Dataset.from_tensor_slices(train_captions)
 
@@ -128,18 +141,11 @@ def tokenization(train_captions, max_length, vocabulary_size):
     # Create the tokenized vectors
     cap_vector = caption_dataset.map(lambda x: tokenizer(x))
 
-    # Create mappings for words to indices and indicies to words.
-    word_to_index = tf.keras.layers.StringLookup(
-        mask_token="",
-        vocabulary=tokenizer.get_vocabulary())
-    index_to_word = tf.keras.layers.StringLookup(
-        mask_token="",
-        vocabulary=tokenizer.get_vocabulary(),
-        invert=True)
+    word_to_index, index_to_word = index_vocab(tokenizer.get_vocabulary())
 
     tokens_shape = word_to_index('<start>')
 
-    return word_to_index, index_to_word, tokenizer, cap_vector, tokens_shape
+    return word_to_index, index_to_word, tokenizer, cap_vector
 
 
 def split_data(img_name_vector, cap_vector, image_features_extract_model, percentage=0.8, ):
@@ -186,7 +192,7 @@ def split_data(img_name_vector, cap_vector, image_features_extract_model, percen
         for bf, p in zip(batch_features, path):
             path_of_feature = p.numpy().decode("utf-8")
             np.save(path_of_feature, bf.numpy())
-    
+
     len(img_name_train), len(cap_train), len(img_name_val), len(cap_val)
 
     return img_name_train, cap_train, img_name_val, cap_val
@@ -214,17 +220,35 @@ def make_dataset(img_name_train, cap_train):
     return dataset
 
 
-def save_dataset(img_name_train, cap_train, img_name_val, cap_val, tokens_shape):
-    pickle.dump(img_name_train, open(f"{save_path}img_name_train", "wb"))
-    pickle.dump(cap_train, open(f"{save_path}cap_train", "wb"))
-    pickle.dump(img_name_val, open(f"{save_path}img_name_val", "wb"))
-    pickle.dump(cap_val, open(f"{save_path}cap_val", "wb"))
-    pickle.dump(tokens_shape, open(f"{save_path}tokens_shape", "wb"))
+def save_dataset(img_name_train, cap_train, img_name_val, cap_val, vocabulary):
+    pickle.dump(img_name_train, open(
+        f"{save_path}dataset/img_name_train", "wb"))
+    pickle.dump(cap_train, open(f"{save_path}dataset/cap_train", "wb"))
+    pickle.dump(img_name_val, open(f"{save_path}dataset/img_name_val", "wb"))
+    pickle.dump(cap_val, open(f"{save_path}dataset/cap_val", "wb"))
+    pickle.dump(vocabulary, open(f"{save_path}dataset/vocabulary", "wb"))
 
+
+def load_dataset():
+    img_name_train = pickle.load(
+        open(f'{save_path}dataset/img_name_train', 'rb'))
+    cap_train = pickle.load(open(f"{save_path}dataset/cap_train", "rb"))
+    img_name_val = pickle.load(open(f"{save_path}dataset/img_name_val", "rb"))
+    cap_val = pickle.load(open(f"{save_path}dataset/cap_val", "rb"))
+    vocabulary = pickle.load(open(f"{save_path}dataset/vocabulary", "rb"))
+    return img_name_train, cap_train, img_name_val, cap_val, vocabulary
 
 
 def save_models(encoder, decoder, image_features_extract_model):
+    encoder.save(f"{save_path}models/encoder")
+    decoder.save(f"{save_path}models/decoder")
+    image_features_extract_model.save(f"{save_path}models/feature_extractor")
 
-    encoder.save(f"{save_path}encoder")
-    decoder.save(f"{save_path}decoder")
-    image_features_extract_model.save(f"{save_path}features_extract")
+
+def load_models():
+    encoder = tf.keras.models.load_model(f"{save_path}models/encoder")
+    decoder = tf.keras.models.load_model(f"{save_path}models/decoder")
+    image_features_extract_model = tf.keras.models.load_model(
+        f"{save_path}models/feature_extractor")
+
+    return encoder, decoder, image_features_extract_model
