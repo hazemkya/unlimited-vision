@@ -88,18 +88,3 @@ class RNN_Decoder(tf.keras.Model):
 
     def reset_state(self, batch_size):
         return tf.zeros((batch_size, self.units))
-
-
-def get_features_extractor():
-    image_model = tf.keras.applications.resnet50.ResNet50(
-        weights='imagenet', include_top=False, input_shape=(224, 224, 3))
-    new_input = image_model.input
-    hidden_layer = image_model.layers[-1].output
-
-    image_features_extract_model = tf.keras.Model(new_input, hidden_layer)
-    # freeze layers
-
-    for layer in image_features_extract_model.layers[:]:
-        layer.trainable = False
-    
-    return image_features_extract_model

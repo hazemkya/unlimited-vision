@@ -7,6 +7,9 @@ import matplotlib.pyplot as plt
 import json
 import collections
 import random
+from tqdm import tqdm
+import pickle
+
 
 import configparser
 
@@ -14,6 +17,10 @@ config = configparser.ConfigParser()
 config.read("config.ini")
 
 sample = int(config["config"]["sample"])
+save_path = config["config"]["save_path"]
+
+BATCH_SIZE = int(config['config']['BATCH_SIZE'])
+BUFFER_SIZE = int(config['config']['BUFFER_SIZE'])
 
 
 def import_files(shuffle):
@@ -68,6 +75,21 @@ def load_image(image_path, format='jpeg'):
     return img, image_path
 
 
+def get_feature_extractor():
+    image_model = tf.keras.applications.resnet50.ResNet50(
+        weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+    new_input = image_model.input
+    hidden_layer = image_model.layers[-1].output
+
+    image_features_extract_model = tf.keras.Model(new_input, hidden_layer)
+    # freeze layers
+
+    for layer in image_features_extract_model.layers[:]:
+        layer.trainable = False
+
+    return image_features_extract_model
+
+
 def plot_attention(image, result, attention_plot):
     temp_image = np.array(Image.open(image))
 
@@ -114,17 +136,21 @@ def tokenization(train_captions, max_length, vocabulary_size):
         mask_token="",
         vocabulary=tokenizer.get_vocabulary(),
         invert=True)
-    return word_to_index, index_to_word, tokenizer, cap_vector
+
+    tokens_shape = word_to_index('<start>')
+
+    return word_to_index, index_to_word, tokenizer, cap_vector, tokens_shape
 
 
-def split_data(img_name_vector, cap_vector, percentage=0.8):
+def split_data(img_name_vector, cap_vector, image_features_extract_model, percentage=0.8, ):
     img_to_cap_vector = collections.defaultdict(list)
     for img, cap in zip(img_name_vector, cap_vector):
         img_to_cap_vector[img].append(cap)
 
     # Create training and validation sets using an 80-20 split randomly.
     img_keys = list(img_to_cap_vector.keys())
-    random.shuffle(img_keys)
+    if shuffle:
+        random.shuffle(img_keys)
 
     slice_index = int(len(img_keys)*percentage)
     img_name_train_keys, img_name_val_keys = img_keys[:
@@ -144,4 +170,61 @@ def split_data(img_name_vector, cap_vector, percentage=0.8):
         img_name_val.extend([imgv] * capv_len)
         cap_val.extend(img_to_cap_vector[imgv])
 
+    # Get unique images
+    encode_train = sorted(set(img_name_vector))
+
+    # Feel free to change batch_size according to your system configuration
+    image_dataset = tf.data.Dataset.from_tensor_slices(encode_train)
+    image_dataset = image_dataset.map(
+        load_image, num_parallel_calls=tf.data.AUTOTUNE).batch(32)
+
+    for img, path in tqdm(image_dataset):
+        batch_features = image_features_extract_model(img)
+        batch_features = tf.reshape(batch_features,
+                                    (batch_features.shape[0], -1, batch_features.shape[3]))
+
+        for bf, p in zip(batch_features, path):
+            path_of_feature = p.numpy().decode("utf-8")
+            np.save(path_of_feature, bf.numpy())
+    
+    len(img_name_train), len(cap_train), len(img_name_val), len(cap_val)
+
     return img_name_train, cap_train, img_name_val, cap_val
+
+
+def make_dataset(img_name_train, cap_train):
+    # Load the numpy files
+    def map_func(img_name, cap):
+        img_tensor = np.load(img_name.decode('utf-8')+'.npy')
+        return img_tensor, cap
+
+    dataset = tf.data.Dataset.from_tensor_slices((img_name_train, cap_train))
+
+    # Use map to load the numpy files in parallel
+    dataset = dataset.map(lambda item1, item2: tf.numpy_function(
+        map_func, [item1, item2], [tf.float32, tf.int64]),
+        num_parallel_calls=tf.data.AUTOTUNE)
+
+    # Shuffle and batch
+    if shuffle:
+        dataset = dataset.shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
+
+    dataset = dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
+
+    return dataset
+
+
+def save_dataset(img_name_train, cap_train, img_name_val, cap_val, tokens_shape):
+    pickle.dump(img_name_train, open(f'{save_path}img_name_train', "wb"))
+    pickle.dump(cap_train, open(f'{save_path}cap_train', "wb"))
+    pickle.dump(img_name_val, open(f'{save_path}img_name_val', "wb"))
+    pickle.dump(cap_val, open(f'{save_path}cap_val', "wb"))
+    pickle.dump(tokens_shape, open(f'{save_path}tokens_shape', "wb"))
+
+
+
+def save_models(encoder, decoder, image_features_extract_model):
+
+    encoder.save(f"{save_path}encoder")
+    decoder.save(f"{save_path}decoder")
+    image_features_extract_model.save(f"{save_path}features_extract")

@@ -84,7 +84,6 @@ def train(epochs, start_epoch, ckpt_manager, num_steps,
             last_average_batch_loss = current_average_batch_loss
             print("Chekpoint saved from compair")
 
-        ckpt_manager.save()
         # if epoch % 2 == 0:
         #     ckpt_manager.save()
         #     print("Chekpoint saved from compair")
