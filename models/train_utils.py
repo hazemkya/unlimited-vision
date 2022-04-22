@@ -96,7 +96,8 @@ def train(epochs, start_epoch, ckpt_manager,
                   total_loss / num_steps, "last save: ", last_save)
             last_save = total_loss / num_steps
 
-        print(f'Epoch {epoch+1} Loss {total_loss/num_steps:.6f}')
+        print(f'Epoch {epoch+1} Loss {total_loss/num_steps:.6f}',
+              "last save: ", last_save)
         print(f'Time taken for 1 epoch {time.time()-start:.2f} sec\n')
         total_time += time.time()-start
 

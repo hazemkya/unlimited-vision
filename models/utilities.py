@@ -16,7 +16,6 @@ import configparser
 config = configparser.ConfigParser()
 config.read("config.ini")
 
-sample = int(config["config"]["sample"])
 save_path = config["config"]["save_path"]
 
 BATCH_SIZE = int(config['config']['BATCH_SIZE'])
@@ -26,11 +25,13 @@ BUFFER_SIZE = int(config['config']['BUFFER_SIZE'])
 def import_files(shuffle, method):
 
     if method == "train":
+        sample = int(config["config"]["train_sample"])
         annotation_file = 'dataset\coco\\tarin\captions_train2017.json'
         image_folder = '\dataset\coco\\tarin\images\\'
-    elif method == "test":
+    elif method == "val":
+        sample = int(config["config"]["val_sample"])
         annotation_file = 'dataset\coco\\test\captions_test2017.json'
-        image_folder = '\dataset\coco\\test\images\\'
+        image_folder = '\dataset\coco\\val\\val2017\\'
 
     PATH = os.path.abspath('.') + image_folder
 
@@ -156,7 +157,7 @@ def tokenization(train_captions, max_length, vocabulary_size):
     return word_to_index, index_to_word, tokenizer, cap_vector
 
 
-def split_data(img_name_vector, cap_vector, image_features_extract_model, percentage=0.8, ):
+def split_data(img_name_vector, cap_vector, image_features_extract_model, percentage=0.8):
     img_to_cap_vector = collections.defaultdict(list)
     for img, cap in zip(img_name_vector, cap_vector):
         img_to_cap_vector[img].append(cap)
@@ -166,9 +167,11 @@ def split_data(img_name_vector, cap_vector, image_features_extract_model, percen
     if shuffle:
         random.shuffle(img_keys)
 
-    slice_index = int(len(img_keys)*percentage)
-    img_name_train_keys, img_name_val_keys = img_keys[:
-                                                      slice_index], img_keys[slice_index:]
+    # slice_index = int(len(img_keys)*percentage)
+    # img_name_train_keys, img_name_val_keys = img_keys[:
+    #                                                   slice_index], img_keys[slice_index:]
+
+    img_name_train_keys = img_keys[:-1]
 
     img_name_train = []
     cap_train = []
@@ -177,12 +180,12 @@ def split_data(img_name_vector, cap_vector, image_features_extract_model, percen
         img_name_train.extend([imgt] * capt_len)
         cap_train.extend(img_to_cap_vector[imgt])
 
-    img_name_val = []
-    cap_val = []
-    for imgv in img_name_val_keys:
-        capv_len = len(img_to_cap_vector[imgv])
-        img_name_val.extend([imgv] * capv_len)
-        cap_val.extend(img_to_cap_vector[imgv])
+    # img_name_val = []
+    # cap_val = []
+    # for imgv in img_name_val_keys:
+    #     capv_len = len(img_to_cap_vector[imgv])
+    #     img_name_val.extend([imgv] * capv_len)
+    #     cap_val.extend(img_to_cap_vector[imgv])
 
     # Get unique images
     encode_train = sorted(set(img_name_vector))
@@ -201,9 +204,10 @@ def split_data(img_name_vector, cap_vector, image_features_extract_model, percen
             path_of_feature = p.numpy().decode("utf-8")
             np.save(path_of_feature, bf.numpy())
 
-    len(img_name_train), len(cap_train), len(img_name_val), len(cap_val)
+    len(img_name_train), len(cap_train)
+    #  len(img_name_val), len(cap_val)
 
-    return img_name_train, cap_train, img_name_val, cap_val
+    return img_name_train, cap_train
 
 
 def make_dataset(img_name_train, cap_train):
