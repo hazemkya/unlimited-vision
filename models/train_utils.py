@@ -111,9 +111,5 @@ def save_loss(loss_plot):
 
 
 def load_loss():
-    try:
-        loss_plot = pickle.load(open(f'{save_path}dataset/loss_plot', 'rb'))
-    except:
-        loss_plot = []
-
+    loss_plot = pickle.load(open(f'{save_path}dataset/loss_plot', 'rb'))
     return loss_plot
