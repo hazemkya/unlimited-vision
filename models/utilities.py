@@ -232,12 +232,10 @@ def make_dataset(img_name_train, cap_train):
     return dataset
 
 
-def save_dataset(img_name_train, cap_train, img_name_val, cap_val, vocabulary, train_captions):
+def save_dataset(img_name_train, cap_train, vocabulary, train_captions):
     pickle.dump(img_name_train, open(
         f"{save_path}dataset/img_name_train", "wb"))
     pickle.dump(cap_train, open(f"{save_path}dataset/cap_train", "wb"))
-    pickle.dump(img_name_val, open(f"{save_path}dataset/img_name_val", "wb"))
-    pickle.dump(cap_val, open(f"{save_path}dataset/cap_val", "wb"))
     pickle.dump(vocabulary, open(f"{save_path}dataset/vocabulary", "wb"))
     pickle.dump(train_captions, open(
         f"{save_path}dataset/train_captions", "wb"))
@@ -247,12 +245,10 @@ def load_dataset():
     img_name_train = pickle.load(
         open(f'{save_path}dataset/img_name_train', 'rb'))
     cap_train = pickle.load(open(f"{save_path}dataset/cap_train", "rb"))
-    img_name_val = pickle.load(open(f"{save_path}dataset/img_name_val", "rb"))
-    cap_val = pickle.load(open(f"{save_path}dataset/cap_val", "rb"))
     vocabulary = pickle.load(open(f"{save_path}dataset/vocabulary", "rb"))
     train_captions = pickle.load(
         open(f"{save_path}dataset/train_captions", "rb"))
-    return img_name_train, cap_train, img_name_val, cap_val, vocabulary, train_captions
+    return img_name_train, cap_train, vocabulary, train_captions
 
 
 def save_models(encoder, decoder, image_features_extract_model):
