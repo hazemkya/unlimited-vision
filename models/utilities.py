@@ -23,12 +23,15 @@ BATCH_SIZE = int(config['config']['BATCH_SIZE'])
 BUFFER_SIZE = int(config['config']['BUFFER_SIZE'])
 
 
-def import_files(shuffle):
+def import_files(shuffle, method):
 
-    annotation_file = 'dataset\coco\\tarin\captions_train2017.json'
-    annotation_folder = '\dataset\coco\\annotations_trainval2017\\annotations\\'
+    if method == "train":
+        annotation_file = 'dataset\coco\\tarin\captions_train2017.json'
+        image_folder = '\dataset\coco\\tarin\images\\'
+    elif method == "test":
+        annotation_file = 'dataset\coco\\test\captions_test2017.json'
+        image_folder = '\dataset\coco\\test\images\\'
 
-    image_folder = '\dataset\coco\\tarin\images\\'
     PATH = os.path.abspath('.') + image_folder
 
     with open(annotation_file, 'r') as f:
@@ -109,7 +112,6 @@ def plot_attention(image, result, attention_plot):
 
 
 def index_vocab(vocabulary):
-    # Create mappings for words to indices and indicies to words.
     word_to_index = tf.keras.layers.StringLookup(
         mask_token="",
         vocabulary=vocabulary)
@@ -141,9 +143,15 @@ def tokenization(train_captions, max_length, vocabulary_size):
     # Create the tokenized vectors
     cap_vector = caption_dataset.map(lambda x: tokenizer(x))
 
-    word_to_index, index_to_word = index_vocab(tokenizer.get_vocabulary())
+    word_to_index = tf.keras.layers.StringLookup(
+        mask_token="",
+        vocabulary=tokenizer.get_vocabulary())
+    index_to_word = tf.keras.layers.StringLookup(
+        mask_token="",
+        vocabulary=tokenizer.get_vocabulary(),
+        invert=True)
 
-    tokens_shape = word_to_index('<start>')
+    # word_to_index, index_to_word = index_vocab(tokenizer.get_vocabulary())
 
     return word_to_index, index_to_word, tokenizer, cap_vector
 
@@ -220,13 +228,15 @@ def make_dataset(img_name_train, cap_train):
     return dataset
 
 
-def save_dataset(img_name_train, cap_train, img_name_val, cap_val, vocabulary):
+def save_dataset(img_name_train, cap_train, img_name_val, cap_val, vocabulary, train_captions):
     pickle.dump(img_name_train, open(
         f"{save_path}dataset/img_name_train", "wb"))
     pickle.dump(cap_train, open(f"{save_path}dataset/cap_train", "wb"))
     pickle.dump(img_name_val, open(f"{save_path}dataset/img_name_val", "wb"))
     pickle.dump(cap_val, open(f"{save_path}dataset/cap_val", "wb"))
     pickle.dump(vocabulary, open(f"{save_path}dataset/vocabulary", "wb"))
+    pickle.dump(train_captions, open(
+        f"{save_path}dataset/train_captions", "wb"))
 
 
 def load_dataset():
@@ -236,7 +246,9 @@ def load_dataset():
     img_name_val = pickle.load(open(f"{save_path}dataset/img_name_val", "rb"))
     cap_val = pickle.load(open(f"{save_path}dataset/cap_val", "rb"))
     vocabulary = pickle.load(open(f"{save_path}dataset/vocabulary", "rb"))
-    return img_name_train, cap_train, img_name_val, cap_val, vocabulary
+    train_captions = pickle.load(
+        open(f"{save_path}dataset/train_captions", "rb"))
+    return img_name_train, cap_train, img_name_val, cap_val, vocabulary, train_captions
 
 
 def save_models(encoder, decoder, image_features_extract_model):

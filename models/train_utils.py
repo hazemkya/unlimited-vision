@@ -1,14 +1,18 @@
-from numpy import Infinity
+from numpy import float32
 import tensorflow as tf
 import time
+import pickle
+import configparser
+
 
 optimizer = tf.keras.optimizers.Adam()
 loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
     from_logits=True, reduction='none')
 
-# adding this in a separate cell because if you run the training cell
-# many times, the loss_plot array will be reset
-loss_plot = []
+config = configparser.ConfigParser()
+config.read("config.ini")
+
+save_path = config["config"]["save_path"]
 
 
 @tf.function
@@ -54,12 +58,18 @@ def loss_function(real, pred):
     return tf.reduce_mean(loss_)
 
 
-def train(epochs, start_epoch, ckpt_manager, num_steps,
-          dataset, decoder, encoder, word_to_index):
+def train(epochs, start_epoch, ckpt_manager,
+          num_steps, dataset, decoder,
+          encoder, word_to_index, loss_plot):
 
     EPOCHS = epochs
     total_time = 0
-    last_average_batch_loss = 10000
+
+    if loss_plot:
+        last_save = loss_plot[-1]
+    else:
+        last_save = float('inf')
+
     for epoch in range(start_epoch, EPOCHS):
         start = time.time()
         total_loss = 0
@@ -73,25 +83,36 @@ def train(epochs, start_epoch, ckpt_manager, num_steps,
                 current_average_batch_loss = batch_loss.numpy() / \
                     int(target.shape[1])
                 print(
-                    f'Epoch {epoch+1} Batch {batch} Loss {current_average_batch_loss:.4f}')
+                    f'Epoch {epoch+1} Batch {batch} Loss {current_average_batch_loss}')
 
         # storing the epoch end loss value to plot later
         loss_plot.append(total_loss / num_steps)
 
         # save a checkpoint if the loss is better than the last saved loss
-        if current_average_batch_loss < last_average_batch_loss:
+        if ((total_loss / num_steps) < last_save):
             ckpt_manager.save()
-            last_average_batch_loss = current_average_batch_loss
-            print("Chekpoint saved from compair")
-
-        # if epoch % 2 == 0:
-        #     ckpt_manager.save()
-        #     print("Chekpoint saved from compair")
+            save_loss(loss_plot)
+            print("Chekpoint autosave current: ",
+                  total_loss / num_steps, "last save: ", last_save)
+            last_save = total_loss / num_steps
 
         print(f'Epoch {epoch+1} Loss {total_loss/num_steps:.6f}')
         print(f'Time taken for 1 epoch {time.time()-start:.2f} sec\n')
         total_time += time.time()-start
 
     print(f'Total time taken: {(total_time/60):.2f} min\n')
+
+    return loss_plot
+
+
+def save_loss(loss_plot):
+    pickle.dump(loss_plot, open(f"{save_path}dataset/loss_plot", "wb"))
+
+
+def load_loss():
+    try:
+        loss_plot = pickle.load(open(f'{save_path}dataset/loss_plot', 'rb'))
+    except:
+        loss_plot = []
 
     return loss_plot
