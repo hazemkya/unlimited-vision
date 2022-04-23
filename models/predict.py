@@ -4,6 +4,7 @@ import configparser
 
 config = configparser.ConfigParser()
 config.read("config.ini")
+
 max_length = int(config['config']['max_length'])
 attention_features_shape = int(config['config']['attention_features_shape'])
 
