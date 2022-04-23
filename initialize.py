@@ -12,6 +12,8 @@ import numpy as np
 from PIL import Image
 import configparser
 
+print("Starting...")
+
 config = configparser.ConfigParser()
 config.read("config.ini")
 
@@ -51,11 +53,13 @@ image_features_extract_model = get_feature_extractor()
 word_to_index, index_to_word, tokenizer, cap_vector = tokenization(
     train_captions, max_length, vocabulary_size)
 
+embeddings_index = {}
+
 if use_glove:
     glove_path = "./dataset/glove.6B/glove.6B.50d.txt"
 
-    embeddings_index = {}
-    with open(glove_path) as f:
+    
+    with open(glove_path, encoding="utf8") as f:
         for line in f:
             word, coefs = line.split(maxsplit=1)
             coefs = np.fromstring(coefs, "f", sep=" ")

@@ -4,11 +4,15 @@ from models.train_utils import *
 from models.predict import *
 
 import configparser
+
+print("Starting...")
+
 config = configparser.ConfigParser()
 config.read("config.ini")
 
 max_length = int(config['config']['max_length'])
 vocabulary_size = int(config['config']['vocabulary_size'])
+use_glove = bool(config['config']['use_glove'])
 
 img_name_train, cap_train, vocabulary, train_captions = load_dataset()
 dataset = make_dataset(img_name_train, cap_train)
@@ -23,7 +27,10 @@ epochs = int(config['config']['epochs'])
 num_steps = len(img_name_train) // BATCH_SIZE
 
 encoder = CNN_Encoder(embedding_dim)
-decoder = RNN_Decoder(embedding_dim, units, tokenizer.vocabulary_size())
+if use_glove:
+    decoder = RNN_Decoder(embedding_dim, units, num_tokens, embedding_matrix)
+else:
+    decoder = RNN_Decoder(embedding_dim, units, tokenizer.vocabulary_size(), None)
 
 optimizer = tf.keras.optimizers.Adam()
 loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
@@ -49,3 +56,5 @@ else:
 train(epochs, start_epoch, ckpt_manager,
       num_steps, dataset, decoder,
       encoder, word_to_index, loss_plot)
+
+print("Done...")
