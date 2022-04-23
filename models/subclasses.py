@@ -1,4 +1,9 @@
 import tensorflow as tf
+import configparser
+
+config = configparser.ConfigParser()
+config.read("config.ini")
+use_glove = bool(config['config']['use_glove'])
 
 
 class CNN_Encoder(tf.keras.Model):
@@ -48,11 +53,20 @@ class BahdanauAttention(tf.keras.Model):
 
 
 class RNN_Decoder(tf.keras.Model):
-    def __init__(self, embedding_dim, units, vocab_size):
+    def __init__(self, embedding_dim, units, vocab_size, embedding_matrix):
         super(RNN_Decoder, self).__init__()
         self.units = units
 
-        self.embedding = tf.keras.layers.Embedding(vocab_size, embedding_dim)
+        if use_glove:
+            self.embedding = tf.keras.layers.Embedding(vocab_size,
+                                                       embedding_dim,
+                                                       embeddings_initializer=tf.keras.initializers.Constant(
+                                                           embedding_matrix),
+                                                       trainable=False)
+        else:
+            self.embedding = tf.keras.layers.Embedding(
+                vocab_size, embedding_dim)
+
         self.gru = tf.keras.layers.GRU(self.units,
                                        return_sequences=True,
                                        return_state=True,
