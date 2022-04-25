@@ -73,15 +73,15 @@ def load_image(image_path, format='jpeg'):
     elif format == "png":
         img = tf.io.decode_png(img, channels=3)
 
-    img = tf.keras.layers.Resizing(224, 224)(img)
-    img = tf.keras.applications.resnet50.preprocess_input(img)
+    img = tf.keras.layers.Resizing(224, 240)(img)
+    img = tf.keras.applications.efficientnet.preprocess_input(img)
 
     return img, image_path
 
 
 def get_feature_extractor():
-    image_model = tf.keras.applications.resnet50.ResNet50(
-        weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+    image_model = tf.keras.applications.EfficientNetB0(
+        weights='imagenet', include_top=False, input_shape=(224, 240, 3))
     new_input = image_model.input
     hidden_layer = image_model.layers[-1].output
 

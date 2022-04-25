@@ -28,9 +28,8 @@ num_steps = len(img_name_train) // BATCH_SIZE
 embeddings_index = {}
 
 if use_glove:
-    glove_path = "./dataset/glove.6B/glove.6B.50d.txt"
+    glove_path = "./dataset/glove.6B/glove.6B.100d.txt"
 
-    
     with open(glove_path, encoding="utf8") as f:
         for line in f:
             word, coefs = line.split(maxsplit=1)
@@ -43,7 +42,7 @@ if use_glove:
     word_index = dict(zip(vocabulary, range(len(vocabulary))))
 
     num_tokens = len(vocabulary) + 2
-    embedding_dim = 50
+    embedding_dim = 100
     hits = 0
     misses = 0
 
@@ -65,7 +64,8 @@ encoder = CNN_Encoder(embedding_dim)
 if use_glove:
     decoder = RNN_Decoder(embedding_dim, units, num_tokens, embedding_matrix)
 else:
-    decoder = RNN_Decoder(embedding_dim, units, tokenizer.vocabulary_size(), None)
+    decoder = RNN_Decoder(embedding_dim, units,
+                          tokenizer.vocabulary_size(), None)
 
 optimizer = tf.keras.optimizers.Adam()
 loss_object = tf.keras.losses.SparseCategoricalCrossentropy(

@@ -56,9 +56,8 @@ word_to_index, index_to_word, tokenizer, cap_vector = tokenization(
 embeddings_index = {}
 
 if use_glove:
-    glove_path = "./dataset/glove.6B/glove.6B.50d.txt"
+    glove_path = "./dataset/glove.6B/glove.6B.100d.txt"
 
-    
     with open(glove_path, encoding="utf8") as f:
         for line in f:
             word, coefs = line.split(maxsplit=1)
@@ -71,7 +70,7 @@ if use_glove:
     word_index = dict(zip(vocabulary, range(len(vocabulary))))
 
     num_tokens = len(vocabulary) + 2
-    embedding_dim = 50
+    embedding_dim = 100
     hits = 0
     misses = 0
 
