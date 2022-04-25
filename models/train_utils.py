@@ -13,6 +13,7 @@ config = configparser.ConfigParser()
 config.read("config.ini")
 
 save_path = config["config"]["save_path"]
+early_stop = int(config["config"]["early_stop"])
 
 
 @tf.function
@@ -64,6 +65,7 @@ def train(epochs, start_epoch, ckpt_manager,
 
     EPOCHS = epochs
     total_time = 0
+    no_change_since = 0
 
     if loss_plot:
         last_save = loss_plot[-1]
@@ -90,16 +92,25 @@ def train(epochs, start_epoch, ckpt_manager,
 
         # save a checkpoint if the loss is better than the last saved loss
         if ((total_loss / num_steps) < last_save):
+            no_change_since = 0
             ckpt_manager.save()
             save_loss(loss_plot)
             print("Chekpoint autosave current: ",
-                  total_loss / num_steps, "last save: ", last_save)
+                  float(total_loss / num_steps), "last save: ", float(last_save))
             last_save = total_loss / num_steps
+        else:
+            no_change_since += 1
+            print(f"No loss gained since {no_change_since}")
 
-        print(f'Epoch {epoch+1} Loss {total_loss/num_steps:.6f}',
+        print(f'Epoch {epoch+1} Loss {float(total_loss/num_steps):.6f}',
               "last save: ", last_save)
         print(f'Time taken for 1 epoch {time.time()-start:.2f} sec\n')
         total_time += time.time()-start
+
+        if no_change_since >= early_stop:
+            print(
+                f"Ending training because no loss has been gained for {no_change_since} epochs.")
+            break
 
     print(f'Total time taken: {(total_time/60):.2f} min\n')
 
