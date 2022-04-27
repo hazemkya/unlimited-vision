@@ -102,7 +102,7 @@ def train(epochs, start_epoch, ckpt_manager,
             no_change_since += 1
             print(f"No loss gained since {no_change_since}")
 
-        print(f'Epoch {epoch+1} Loss {float(total_loss/num_steps):.6f}',
+        print(f'Epoch {epoch+1} Loss {float(total_loss/num_steps)}',
               "last save: ", last_save)
         print(f'Time taken for 1 epoch {time.time()-start:.2f} sec\n')
         total_time += time.time()-start
