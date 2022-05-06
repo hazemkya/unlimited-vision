@@ -41,6 +41,8 @@ train_captions = []
 img_name_vector = []
 for image_path in train_image_paths:
     caption_list = image_path_to_caption[image_path]
+    if len(caption_list) != 5:
+        caption_list = caption_list[:5]
     train_captions.extend(caption_list)
     img_name_vector.extend([image_path] * len(caption_list))
 

@@ -30,7 +30,7 @@ def import_files(shuffle, method):
         image_folder = '\dataset\coco\\tarin\images\\'
     elif method == "val":
         sample = int(config["config"]["val_sample"])
-        annotation_file = 'dataset\coco\\test\captions_test2017.json'
+        annotation_file = 'dataset\coco\\val\captions_val2017.json'
         image_folder = '\dataset\coco\\val\\val2017\\'
 
     PATH = os.path.abspath('.') + image_folder
@@ -54,7 +54,10 @@ def import_files(shuffle, method):
 
     # Select the first sample image_paths from the shuffled set.
     # Approximately each image id has 5 captions associated with it, so that will
-    train_image_paths = image_paths[:sample]
+    if not sample == -1:
+        train_image_paths = image_paths[:sample]
+    else:
+        train_image_paths = image_paths[:]
 
     # train_image_paths = [item.replace("\\","/") for item in train_image_paths] #windows
 
@@ -157,7 +160,7 @@ def tokenization(train_captions, max_length, vocabulary_size):
     return word_to_index, index_to_word, tokenizer, cap_vector
 
 
-def split_data(img_name_vector, cap_vector, image_features_extract_model, percentage=0.8):
+def split_data(img_name_vector, cap_vector, image_features_extract_model, percentage=1):
     img_to_cap_vector = collections.defaultdict(list)
     for img, cap in zip(img_name_vector, cap_vector):
         img_to_cap_vector[img].append(cap)
@@ -171,7 +174,7 @@ def split_data(img_name_vector, cap_vector, image_features_extract_model, percen
     # img_name_train_keys, img_name_val_keys = img_keys[:
     #                                                   slice_index], img_keys[slice_index:]
 
-    img_name_train_keys = img_keys[:-1]
+    img_name_train_keys = img_keys
 
     img_name_train = []
     cap_train = []
