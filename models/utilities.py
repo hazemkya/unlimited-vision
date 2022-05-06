@@ -132,7 +132,7 @@ def tokenization(train_captions, max_length, vocabulary_size):
     def standardize(inputs):
         inputs = tf.strings.lower(inputs)
         return tf.strings.regex_replace(inputs,
-                                        r"!\"#$%&\(\)\*\+.,-/:;=?@\[\\\]^_`{|}~", "")
+                                        r"[!\"#$%&\(\)\*\+.,-/:;=?@\[\\\]^_`{|}~]", "")
 
     tokenizer = tf.keras.layers.TextVectorization(
         max_tokens=vocabulary_size,
