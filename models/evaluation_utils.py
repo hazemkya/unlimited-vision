@@ -108,3 +108,28 @@ def getHypotheses(img_name_val, encoder, decoder,
 
         list_of_hypotheses.append(' '.join(result))
     return list_of_hypotheses
+
+
+def makeResultFile(img_name_vector_val, encoder, decoder,
+                   image_features_extract_model, word_to_index_train,
+                   index_to_word_train):
+
+    result_list = []
+    for i in range(0, len(img_name_vector_val), 5):
+        id = img_name_vector_val[i].split("val2017\\")[1].split(".")[0]
+        cap = predict(img_name_vector_val[i], encoder, decoder, image_features_extract_model,
+                      word_to_index_train, index_to_word_train)
+
+        if cap[-1] == "<end>":
+            cap.remove("<end>")
+
+        cap = ' '.join(cap)
+
+        temp = {"image_id": int(id.lstrip('0')), "caption": cap}
+
+        result_list.append(temp)
+
+    with open('dataset\coco\\result\\result.json', 'w') as outfile:
+        json.dump(result_list, outfile, sort_keys=True)
+
+    return result_list

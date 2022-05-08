@@ -31,6 +31,7 @@ max_length = int(config['config']['max_length'])
 # Use the top words for a vocabulary.
 vocabulary_size = int(config['config']['vocabulary_size'])
 use_glove = bool(config['config']['use_glove'])
+glove_dim = int(config['config']['glove_dim'])
 
 # create data lists
 # import data and save it to a dict, also save it's keys in a list
@@ -58,20 +59,27 @@ word_to_index, index_to_word, tokenizer, cap_vector = tokenization(
 embeddings_index = {}
 
 if use_glove:
-    glove_path = "./dataset/glove.6B/glove.6B.100d.txt"
+    new_glove_path = f"./dataset/glove.6B/new_glove.6B.{glove_dim}d.pkl"
+    tuned_glove = pickle.load(open(new_glove_path, "rb"))
+    len(tuned_glove)
 
-    with open(glove_path, encoding="utf8") as f:
+    glove_path = f"./dataset/glove.6B/glove.6B.{glove_dim}d.txt"
+
+    embeddings_index = {}
+    with open(glove_path, encoding="utf-8") as f:
         for line in f:
             word, coefs = line.split(maxsplit=1)
             coefs = np.fromstring(coefs, "f", sep=" ")
             embeddings_index[word] = coefs
+
+    embeddings_index.update(tuned_glove)
 
     print("Found %s word vectors." % len(embeddings_index))
 
     vocabulary = tokenizer.get_vocabulary()
     word_index = dict(zip(vocabulary, range(len(vocabulary))))
 
-    num_tokens = len(vocabulary) + 2
+    num_tokens = len(vocabulary)
     embedding_dim = 100
     hits = 0
     misses = 0

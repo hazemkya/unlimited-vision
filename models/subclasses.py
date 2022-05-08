@@ -57,7 +57,7 @@ class RNN_Decoder(tf.keras.Model):
         super(RNN_Decoder, self).__init__()
         self.units = units
         
-        self.dropout = tf.keras.layers.Dropout(rate=0.2)
+        # self.dropout = tf.keras.layers.Dropout(rate=0.2)
 
         if use_glove:
             self.embedding = tf.keras.layers.Embedding(vocab_size,
@@ -76,7 +76,7 @@ class RNN_Decoder(tf.keras.Model):
         self.fc1 = tf.keras.layers.Dense(self.units)
         self.fc2 = tf.keras.layers.Dense(vocab_size)
 
-        self.dropout = tf.keras.layers.Dropout(rate=0.2)
+        # self.dropout = tf.keras.layers.Dropout(rate=0.2)
 
         self.attention = BahdanauAttention(self.units)
 
