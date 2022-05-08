@@ -80,7 +80,7 @@ if use_glove:
     word_index = dict(zip(vocabulary, range(len(vocabulary))))
 
     num_tokens = len(vocabulary)
-    embedding_dim = 100
+    embedding_dim = glove_dim
     hits = 0
     misses = 0
 

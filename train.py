@@ -13,6 +13,7 @@ config.read("config.ini")
 max_length = int(config['config']['max_length'])
 vocabulary_size = int(config['config']['vocabulary_size'])
 use_glove = bool(config['config']['use_glove'])
+glove_dim = int(config['config']['glove_dim'])
 
 img_name_train, cap_train, vocabulary, train_captions = load_dataset()
 dataset = make_dataset(img_name_train, cap_train)
@@ -28,21 +29,28 @@ num_steps = len(img_name_train) // BATCH_SIZE
 embeddings_index = {}
 
 if use_glove:
-    glove_path = "./dataset/glove.6B/glove.6B.100d.txt"
+    new_glove_path = f"./dataset/glove.6B/new_glove.6B.{glove_dim}d.pkl"
+    tuned_glove = pickle.load(open(new_glove_path, "rb"))
+    len(tuned_glove)
 
-    with open(glove_path, encoding="utf8") as f:
+    glove_path = f"./dataset/glove.6B/glove.6B.{glove_dim}d.txt"
+
+    embeddings_index = {}
+    with open(glove_path, encoding="utf-8") as f:
         for line in f:
             word, coefs = line.split(maxsplit=1)
             coefs = np.fromstring(coefs, "f", sep=" ")
             embeddings_index[word] = coefs
+
+    embeddings_index.update(tuned_glove)
 
     print("Found %s word vectors." % len(embeddings_index))
 
     vocabulary = tokenizer.get_vocabulary()
     word_index = dict(zip(vocabulary, range(len(vocabulary))))
 
-    num_tokens = len(vocabulary) + 2
-    embedding_dim = 100
+    num_tokens = len(vocabulary)
+    embedding_dim = glove_dim
     hits = 0
     misses = 0
 
