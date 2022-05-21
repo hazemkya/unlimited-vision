@@ -6,7 +6,7 @@ from models.predict import *
 
 def makeResultFile(img_name_vector_val, encoder, decoder,
                    image_features_extract_model, word_to_index_train,
-                   index_to_word_train, percentage=1):
+                   index_to_word_train, percentage=1, file_name="result"):
 
     result_list = []
     ImgIDs = []
@@ -27,7 +27,7 @@ def makeResultFile(img_name_vector_val, encoder, decoder,
         result_list.append(temp)
         ImgIDs.append(imid)
 
-    with open('dataset\coco\\result\\result.json', 'w') as outfile:
+    with open(f'dataset\coco\\result\\{file_name}.json', 'w') as outfile:
         json.dump(result_list, outfile, sort_keys=True)
 
     return result_list, ImgIDs

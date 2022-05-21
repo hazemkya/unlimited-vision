@@ -6,7 +6,10 @@ import configparser
 from models.evaluation_utils import *
 from pycocotools.coco import COCO
 from pycocoevalcap.eval import COCOEvalCap
-import json
+import sys
+import os
+import subprocess
+
 
 optimizer = tf.keras.optimizers.Adam()
 loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
@@ -17,6 +20,7 @@ config.read("config.ini")
 
 save_path = config["config"]["save_path"]
 early_stop = int(config["config"]["early_stop"])
+eval_percentage = float(config["config"]["eval_percentage"])
 
 
 @tf.function
@@ -108,7 +112,7 @@ def train(epochs, start_epoch, ckpt_manager,
         total_time += time.time()-start
 
         # save a checkpoint if the loss is better than the last saved loss
-        if (bleu_curr < best_score):
+        if (bleu_curr >= best_score):
             no_change_since = 0
             ckpt_manager.save()
             save_loss(loss_plot)
@@ -138,21 +142,22 @@ def evaluate_epoch(img_name_vector_val, encoder, decoder,
 
     result_a, ImgIDs = makeResultFile(img_name_vector_val, encoder, decoder,
                                       image_features_extract_model, word_to_index_train,
-                                      index_to_word_train, percentage=0.1)
-    # create coco object and coco_result object
-    coco = COCO(annotation_file)
-    coco_result = coco.loadRes(results_file)
+                                      index_to_word_train, percentage=eval_percentage,
+                                      file_name='temp_result')
+    with suppress_output(suppress_stdout=True, suppress_stderr=True):
+        # create coco object and coco_result object
+        coco = COCO(annotation_file)
+        coco_result = coco.loadRes(results_file)
 
-    # create coco_eval object by taking coco and coco_result
-    coco_eval = COCOEvalCap(coco, coco_result, ImgIDs)
+        # create coco_eval object by taking coco and coco_result
+        coco_eval = COCOEvalCap(coco, coco_result, ImgIDs)
 
-    coco_eval.evaluate()
+        coco_eval.evaluate()
+    print("================================")
     for metric, score in coco_eval.eval.items():
         if metric == 'Bleu_1':
-            if score > best_score:
-                bleu_curr = score
-
-    print(f'{metric}: {score:.3f}')
+            bleu_curr = score
+        print(f'{metric}: {score}')
 
     return bleu_curr
 
@@ -164,3 +169,43 @@ def save_loss(loss_plot):
 def load_loss():
     loss_plot = pickle.load(open(f'{save_path}dataset/loss_plot', 'rb'))
     return loss_plot
+
+
+class HiddenPrints:
+    def __enter__(self):
+        self._original_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
+
+        self._original_stderr = sys.stderr
+        sys.stderr = open(os.devnull, "w")
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout.close()
+        sys.stdout = self._original_stdout
+
+        sys.stderr.close()
+        sys.stderr = self._original_stderr
+
+
+class suppress_output:
+    def __init__(self, suppress_stdout=False, suppress_stderr=False):
+        self.suppress_stdout = suppress_stdout
+        self.suppress_stderr = suppress_stderr
+        self._stdout = None
+        self._stderr = None
+
+    def __enter__(self):
+        devnull = open(os.devnull, "w")
+        if self.suppress_stdout:
+            self._stdout = sys.stdout
+            sys.stdout = devnull
+
+        if self.suppress_stderr:
+            self._stderr = sys.stderr
+            sys.stderr = devnull
+
+    def __exit__(self, *args):
+        if self.suppress_stdout:
+            sys.stdout = self._stdout
+        if self.suppress_stderr:
+            sys.stderr = self._stderr
