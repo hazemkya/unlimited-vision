@@ -1,0 +1,12 @@
+-Introduction - Faisal
+
+-Background - Rayan
+
+-Evaluation - Mohammed
+
+
+-Architecture 
+-Result
+-Conclusion
+-Future work
+-Demo

@@ -76,15 +76,15 @@ def load_image(image_path, format='jpeg'):
     elif format == "png":
         img = tf.io.decode_png(img, channels=3)
 
-    img = tf.keras.layers.Resizing(224, 240)(img)
-    img = tf.keras.applications.efficientnet.preprocess_input(img)
+    img = tf.keras.layers.Resizing(256, 256)(img)
+    img = tf.keras.applications.resnet.preprocess_input(img)
 
     return img, image_path
 
 
 def get_feature_extractor():
-    image_model = tf.keras.applications.EfficientNetB0(
-        weights='imagenet', include_top=False, input_shape=(224, 240, 3))
+    image_model = tf.keras.applications.resnet.ResNet152(
+        weights='imagenet', include_top=False, input_shape=(256, 256, 3))
     new_input = image_model.input
     hidden_layer = image_model.layers[-1].output
 
@@ -107,7 +107,7 @@ def plot_attention(image, result, attention_plot):
         temp_att = np.resize(attention_plot[i], (8, 8))
         grid_size = max(int(np.ceil(len_result/2)), 2)
         ax = fig.add_subplot(grid_size, grid_size, i+1)
-        ax.set_title(result[i])
+        ax.set_title(result[i], backgroundcolor="white")
         img = ax.imshow(temp_image)
         ax.imshow(temp_att, cmap='gray', alpha=0.6, extent=img.get_extent())
 
@@ -127,7 +127,7 @@ def index_vocab(vocabulary):
     return word_to_index, index_to_word
 
 
-def tokenization(train_captions, max_length, vocabulary_size):
+def tokenization(train_captions, max_length, vocabulary_size, vocabulary=None):
     caption_dataset = tf.data.Dataset.from_tensor_slices(train_captions)
 
     # We will override the default standardization of TextVectorization to preserve
@@ -146,13 +146,16 @@ def tokenization(train_captions, max_length, vocabulary_size):
 
     # Create the tokenized vectors
     cap_vector = caption_dataset.map(lambda x: tokenizer(x))
-
+    if(vocabulary):
+        vocabulary = vocabulary
+    else:
+        vocabulary = tokenizer.get_vocabulary()
     word_to_index = tf.keras.layers.StringLookup(
         mask_token="",
-        vocabulary=tokenizer.get_vocabulary())
+        vocabulary=vocabulary)
     index_to_word = tf.keras.layers.StringLookup(
         mask_token="",
-        vocabulary=tokenizer.get_vocabulary(),
+        vocabulary=vocabulary,
         invert=True)
 
     # word_to_index, index_to_word = index_vocab(tokenizer.get_vocabulary())
@@ -236,22 +239,18 @@ def make_dataset(img_name_train, cap_train):
 
 
 def save_dataset(img_name_train, cap_train, vocabulary, train_captions):
-    pickle.dump(img_name_train, open(
-        f"{save_path}dataset/img_name_train", "wb"))
-    pickle.dump(cap_train, open(f"{save_path}dataset/cap_train", "wb"))
+    # pickle.dump(img_name_train, open(f"{save_path}dataset/img_name_train", "wb"))
+    # pickle.dump(cap_train, open(f"{save_path}dataset/cap_train", "wb"))
     pickle.dump(vocabulary, open(f"{save_path}dataset/vocabulary", "wb"))
-    pickle.dump(train_captions, open(
-        f"{save_path}dataset/train_captions", "wb"))
+    # pickle.dump(train_captions, open(f"{save_path}dataset/train_captions", "wb"))
 
 
 def load_dataset():
-    img_name_train = pickle.load(
-        open(f'{save_path}dataset/img_name_train', 'rb'))
-    cap_train = pickle.load(open(f"{save_path}dataset/cap_train", "rb"))
+    # img_name_train = pickle.load(open(f'{save_path}dataset/img_name_train', 'rb'))
+    # cap_train = pickle.load(open(f"{save_path}dataset/cap_train", "rb"))
     vocabulary = pickle.load(open(f"{save_path}dataset/vocabulary", "rb"))
-    train_captions = pickle.load(
-        open(f"{save_path}dataset/train_captions", "rb"))
-    return img_name_train, cap_train, vocabulary, train_captions
+    # train_captions = pickle.load(open(f"{save_path}dataset/train_captions", "rb"))
+    return vocabulary
 
 
 def save_models(encoder, decoder, image_features_extract_model):
