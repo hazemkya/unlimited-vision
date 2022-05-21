@@ -71,14 +71,14 @@ class RNN_Decoder(tf.keras.Model):
             self.embedding = tf.keras.layers.Embedding(
                 vocab_size, embedding_dim)
 
-        self.dropout = tf.keras.layers.Dropout(rate=0.5)
-
         self.gru = tf.keras.layers.GRU(self.units,
                                        return_sequences=True,
                                        return_state=True,
                                        recurrent_initializer='glorot_uniform')
 
         # self.dropout = tf.keras.layers.Dropout(rate=0.2)
+
+        self.dropout = tf.keras.layers.Dropout(rate=0.5)
 
         self.fc1 = tf.keras.layers.Dense(self.units)
 

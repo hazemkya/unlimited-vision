@@ -97,7 +97,7 @@ def train(epochs, start_epoch, ckpt_manager,
         # storing the epoch end loss value to plot later
         loss_plot.append(total_loss / num_steps)
 
-        print(f'Epoch {epoch+1} Loss {float(bleu_curr)}',
+        print(f'Epoch {epoch+1} Loss {float(total_loss/num_steps)}',
               "last save: ", float(best_score))
 
         bleu_curr = evaluate_epoch(img_name_vector_val, encoder, decoder,
