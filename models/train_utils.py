@@ -3,7 +3,10 @@ import tensorflow as tf
 import time
 import pickle
 import configparser
-
+from models.evaluation_utils import *
+from pycocotools.coco import COCO
+from pycocoevalcap.eval import COCOEvalCap
+import json
 
 optimizer = tf.keras.optimizers.Adam()
 loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
@@ -61,16 +64,20 @@ def loss_function(real, pred):
 
 def train(epochs, start_epoch, ckpt_manager,
           num_steps, dataset, decoder,
-          encoder, word_to_index, loss_plot):
+          encoder, loss_plot, word_to_index_train,
+          index_to_word_train, img_name_vector_val,
+          image_features_extract_model):
 
     EPOCHS = epochs
     total_time = 0
     no_change_since = 0
 
-    if loss_plot:
-        last_save = loss_plot[-1]
-    else:
-        last_save = float('inf')
+    # if loss_plot:
+    #     last_save = loss_plot[-1]
+    # else:
+    #     last_save = float('inf')
+
+    best_score = 0
 
     for epoch in range(start_epoch, EPOCHS):
         start = time.time()
@@ -78,7 +85,7 @@ def train(epochs, start_epoch, ckpt_manager,
         current_average_batch_loss = 0
         for (batch, (img_tensor, target)) in enumerate(dataset):
             batch_loss, t_loss = train_step(img_tensor, target, decoder,
-                                            encoder, word_to_index)
+                                            encoder, word_to_index_train)
             total_loss += t_loss
 
             if batch % 100 == 0:
@@ -90,22 +97,27 @@ def train(epochs, start_epoch, ckpt_manager,
         # storing the epoch end loss value to plot later
         loss_plot.append(total_loss / num_steps)
 
+        print(f'Epoch {epoch+1} Loss {float(bleu_curr)}',
+              "last save: ", float(best_score))
+
+        bleu_curr = evaluate_epoch(img_name_vector_val, encoder, decoder,
+                                   image_features_extract_model, word_to_index_train,
+                                   index_to_word_train, best_score)
+
+        print(f'Time taken for 1 epoch {time.time()-start:.2f} sec\n')
+        total_time += time.time()-start
+
         # save a checkpoint if the loss is better than the last saved loss
-        if ((total_loss / num_steps) < last_save):
+        if (bleu_curr < best_score):
             no_change_since = 0
             ckpt_manager.save()
             save_loss(loss_plot)
             print("Chekpoint autosave current: ",
-                  float(total_loss / num_steps), "last save: ", float(last_save))
-            last_save = total_loss / num_steps
+                  float(bleu_curr), "last save: ", float(best_score))
+            best_score = bleu_curr
         else:
             no_change_since += 1
             print(f"No loss gained since {no_change_since}")
-
-        print(f'Epoch {epoch+1} Loss {float(total_loss/num_steps)}',
-              "last save: ", last_save)
-        print(f'Time taken for 1 epoch {time.time()-start:.2f} sec\n')
-        total_time += time.time()-start
 
         if no_change_since >= early_stop:
             print(
@@ -115,6 +127,34 @@ def train(epochs, start_epoch, ckpt_manager,
     print(f'Total time taken: {(total_time/60):.2f} min\n')
 
     return loss_plot
+
+
+def evaluate_epoch(img_name_vector_val, encoder, decoder,
+                   image_features_extract_model, word_to_index_train,
+                   index_to_word_train, best_score):
+
+    annotation_file = 'dataset\coco\\val\captions_val2017.json'
+    results_file = 'dataset\coco\\result\\temp_result.json'
+
+    result_a, ImgIDs = makeResultFile(img_name_vector_val, encoder, decoder,
+                                      image_features_extract_model, word_to_index_train,
+                                      index_to_word_train, percentage=0.1)
+    # create coco object and coco_result object
+    coco = COCO(annotation_file)
+    coco_result = coco.loadRes(results_file)
+
+    # create coco_eval object by taking coco and coco_result
+    coco_eval = COCOEvalCap(coco, coco_result, ImgIDs)
+
+    coco_eval.evaluate()
+    for metric, score in coco_eval.eval.items():
+        if metric == 'Bleu_1':
+            if score > best_score:
+                bleu_curr = score
+
+    print(f'{metric}: {score:.3f}')
+
+    return bleu_curr
 
 
 def save_loss(loss_plot):

@@ -2,10 +2,13 @@ from models.utilities import *
 from models.subclasses import *
 from models.train_utils import *
 from models.predict import *
+from pycocotools.coco import COCO
+from pycocoevalcap.eval import COCOEvalCap
+import json
 
 import configparser
 
-print("Starting...")
+print("Started training...")
 
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -17,8 +20,28 @@ glove_dim = int(config['config']['glove_dim'])
 
 img_name_train, cap_train, vocabulary, train_captions = load_dataset()
 dataset = make_dataset(img_name_train, cap_train)
-word_to_index, index_to_word, tokenizer, cap_vector = tokenization(
+word_to_index_train, index_to_word_train, tokenizer, cap_vector = tokenization(
     train_captions, max_length, vocabulary_size)
+
+val_image_paths, image_path_to_caption_val = import_files(
+    shuffle=False, method="val")
+
+val_captions = []
+img_name_vector_val = []
+for image_path in val_image_paths:
+    caption_list = image_path_to_caption_val[image_path]
+    if len(caption_list) != 5:
+        caption_list = caption_list[:5]
+    val_captions.extend(caption_list)
+    img_name_vector_val.extend([image_path] * len(caption_list))
+
+word_to_index_val, index_to_word_val, tokenizer_val, cap_vector_val = tokenization(
+    val_captions, max_length, vocabulary_size)
+
+image_features_extract_model = get_feature_extractor()
+
+img_name_val, cap_val = split_data(img_name_vector_val, cap_vector_val,
+                                   image_features_extract_model, 1)
 
 units = int(config['config']['units'])
 embedding_dim = int(config['config']['embedding_dim'])
@@ -96,8 +119,12 @@ if start_epoch == 0:
 else:
     loss_plot = load_loss()
 
+
 train(epochs, start_epoch, ckpt_manager,
       num_steps, dataset, decoder,
-      encoder, word_to_index, loss_plot)
+      encoder, loss_plot, word_to_index_train,
+      index_to_word_train, img_name_vector_val,
+      image_features_extract_model)
+
 
 print("Done...")
