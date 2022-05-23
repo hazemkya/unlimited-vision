@@ -12,7 +12,7 @@ import numpy as np
 from PIL import Image
 import configparser
 
-print("Starting...")
+print("Started initializer...")
 
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -103,4 +103,5 @@ img_name_train, cap_train = split_data(
 save_dataset(img_name_train, cap_train,
              tokenizer.get_vocabulary(), train_captions)
 
+print(f"Vocabulary size : {tokenizer.vocabulary_size()}")
 print("Done..")

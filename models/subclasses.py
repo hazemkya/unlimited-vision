@@ -53,10 +53,10 @@ class BahdanauAttention(tf.keras.Model):
 
 
 class RNN_Decoder(tf.keras.Model):
-    def __init__(self, embedding_dim, units, vocab_size, embedding_matrix):
+    def __init__(self, embedding_dim, units, vocab_size, embedding_matrix, training=False):
         super(RNN_Decoder, self).__init__()
         self.units = units
-
+        self.training = training
         # self.dropout = tf.keras.layers.Dropout(rate=0.2)
 
         self.attention = BahdanauAttention(self.units)
@@ -84,7 +84,7 @@ class RNN_Decoder(tf.keras.Model):
 
         self.fc2 = tf.keras.layers.Dense(vocab_size)
 
-    def call(self, x, features, hidden):
+    def call(self, x, features, hidden, training=False):
         # defining attention as a separate model
         context_vector, attention_weights = self.attention(features, hidden)
 
@@ -96,6 +96,10 @@ class RNN_Decoder(tf.keras.Model):
 
         # passing the concatenated vector to the GRU
         output, state = self.gru(x)
+
+        # dropout layer
+        if training:
+            output = self.dropout(output, training=training)
 
         # shape == (batch_size, max_length, hidden_size)
         x = self.fc1(output)

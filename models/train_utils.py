@@ -106,6 +106,7 @@ def train(epochs, start_epoch, ckpt_manager,
               "last save: ", float(best_score))
 
         if len(loss_plot) % 4 == 0:
+            print("Evaluating..")
             bleu_curr = evaluate_epoch(img_name_vector_val, encoder, decoder,
                                        image_features_extract_model, word_to_index_train,
                                        index_to_word_train, best_score)
