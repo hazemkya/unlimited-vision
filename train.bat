@@ -1,4 +1,3 @@
 @ECHO OFF
-call conda activate uvapp
-python train.py
+conda run -n uvapp --no-capture-output python train.py 
 PAUSE

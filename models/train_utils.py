@@ -39,7 +39,8 @@ def train_step(img_tensor, target, decoder, encoder, word_to_index):
 
         for i in range(1, target.shape[1]):
             # passing the features through the decoder
-            predictions, hidden, _ = decoder(dec_input, features, hidden)
+            predictions, hidden, _ = decoder(
+                dec_input, features, hidden, training=True)
 
             loss += loss_function(target[:, i], predictions)
 
@@ -76,12 +77,6 @@ def train(epochs, start_epoch, ckpt_manager,
     EPOCHS = epochs
     total_time = 0
     no_change_since = 0
-
-    # if loss_plot:
-    #     last_save = loss_plot[-1]
-    # else:
-    #     last_save = float('inf')
-
     best_score = 0
 
     for epoch in range(start_epoch, EPOCHS):
@@ -105,7 +100,7 @@ def train(epochs, start_epoch, ckpt_manager,
         print(f'Epoch {epoch+1} Loss {float(total_loss/num_steps)}',
               "last save: ", float(best_score))
 
-        if len(loss_plot) % 4 == 0:
+        if len(loss_plot) % 10 == 0:
             print("Evaluating..")
             bleu_curr = evaluate_epoch(img_name_vector_val, encoder, decoder,
                                        image_features_extract_model, word_to_index_train,

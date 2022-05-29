@@ -9,6 +9,7 @@ testVideos/*
 original.ipynb
 main-copy.ipynb
 evaluation/eval.py
+TestSamples/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

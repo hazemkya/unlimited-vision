@@ -1,4 +1,3 @@
 @ECHO OFF
-call conda activate uvapp
-python initialize.py
+conda run -n uvapp --no-capture-output python initialize.py
 PAUSE

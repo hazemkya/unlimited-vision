@@ -94,12 +94,12 @@ if use_glove:
 encoder = CNN_Encoder(embedding_dim)
 if use_glove:
     decoder = RNN_Decoder(embedding_dim, units, num_tokens,
-                          embedding_matrix, training=True)
+                          embedding_matrix)
     print(f"Vocabulary size : {num_tokens}")
 
 else:
     decoder = RNN_Decoder(embedding_dim, units,
-                          tokenizer.vocabulary_size(), None, training=True)
+                          tokenizer.vocabulary_size(), None)
     print(f"Vocabulary size : {len(tokenizer.get_vocabulary())}")
 
 

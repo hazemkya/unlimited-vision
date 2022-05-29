@@ -53,10 +53,9 @@ class BahdanauAttention(tf.keras.Model):
 
 
 class RNN_Decoder(tf.keras.Model):
-    def __init__(self, embedding_dim, units, vocab_size, embedding_matrix, training=False):
+    def __init__(self, embedding_dim, units, vocab_size, embedding_matrix):
         super(RNN_Decoder, self).__init__()
         self.units = units
-        self.training = training
         # self.dropout = tf.keras.layers.Dropout(rate=0.2)
 
         self.attention = BahdanauAttention(self.units)
