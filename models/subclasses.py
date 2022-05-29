@@ -56,7 +56,6 @@ class RNN_Decoder(tf.keras.Model):
     def __init__(self, embedding_dim, units, vocab_size, embedding_matrix):
         super(RNN_Decoder, self).__init__()
         self.units = units
-        # self.dropout = tf.keras.layers.Dropout(rate=0.2)
 
         self.attention = BahdanauAttention(self.units)
 
@@ -74,8 +73,6 @@ class RNN_Decoder(tf.keras.Model):
                                        return_sequences=True,
                                        return_state=True,
                                        recurrent_initializer='glorot_uniform')
-
-        # self.dropout = tf.keras.layers.Dropout(rate=0.2)
 
         self.dropout = tf.keras.layers.Dropout(rate=0.5)
 

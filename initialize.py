@@ -47,9 +47,6 @@ for image_path in train_image_paths:
     train_captions.extend(caption_list)
     img_name_vector.extend([image_path] * len(caption_list))
 
-# print(train_captions[0])
-# Image.open(img_name_vector[0])
-
 # create and freeze feature extractor model
 image_features_extract_model = get_feature_extractor()
 
@@ -104,4 +101,4 @@ save_dataset(img_name_train, cap_train,
              tokenizer.get_vocabulary(), train_captions)
 
 print(f"Vocabulary size : {tokenizer.vocabulary_size()}")
-print("Done..")
+print("Initializer done..")

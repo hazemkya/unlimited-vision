@@ -43,10 +43,8 @@ def import_files(shuffle, method):
     for val in annotations['annotations']:
         caption = f"<start> {val['caption']} <end>"
         image_path = PATH + '%012d.jpg' % (val['image_id'])
-        # image_path.replace("\\","/") #windows
         image_path_to_caption[image_path].append(caption)
 
-    # image_path_to_caption = [item.replace("\\","/") for item in image_path_to_caption] #windows
     image_paths = list(image_path_to_caption.keys())
 
     if shuffle:
@@ -58,8 +56,6 @@ def import_files(shuffle, method):
         train_image_paths = image_paths[:sample]
     else:
         train_image_paths = image_paths[:]
-
-    # train_image_paths = [item.replace("\\","/") for item in train_image_paths] #windows
 
     print(len(train_image_paths))
     # Download caption annotation files
@@ -159,8 +155,6 @@ def tokenization(train_captions, max_length, vocabulary_size, vocabulary=None):
         vocabulary=vocabulary,
         invert=True)
 
-    # word_to_index, index_to_word = index_vocab(tokenizer.get_vocabulary())
-
     return word_to_index, index_to_word, tokenizer, cap_vector
 
 
@@ -174,10 +168,6 @@ def split_data(img_name_vector, cap_vector, image_features_extract_model, percen
     if shuffle:
         random.shuffle(img_keys)
 
-    # slice_index = int(len(img_keys)*percentage)
-    # img_name_train_keys, img_name_val_keys = img_keys[:
-    #                                                   slice_index], img_keys[slice_index:]
-
     img_name_train_keys = img_keys
 
     img_name_train = []
@@ -186,13 +176,6 @@ def split_data(img_name_vector, cap_vector, image_features_extract_model, percen
         capt_len = len(img_to_cap_vector[imgt])
         img_name_train.extend([imgt] * capt_len)
         cap_train.extend(img_to_cap_vector[imgt])
-
-    # img_name_val = []
-    # cap_val = []
-    # for imgv in img_name_val_keys:
-    #     capv_len = len(img_to_cap_vector[imgv])
-    #     img_name_val.extend([imgv] * capv_len)
-    #     cap_val.extend(img_to_cap_vector[imgv])
 
     # Get unique images
     encode_train = sorted(set(img_name_vector))
@@ -212,7 +195,6 @@ def split_data(img_name_vector, cap_vector, image_features_extract_model, percen
             np.save(path_of_feature, bf.numpy())
 
     len(img_name_train), len(cap_train)
-    #  len(img_name_val), len(cap_val)
 
     return img_name_train, cap_train
 

@@ -1,6 +1,5 @@
 from nltk.translate.bleu_score import corpus_bleu
 from nltk.translate.meteor_score import meteor_score
-from rouge import Rouge
 from models.predict import *
 
 

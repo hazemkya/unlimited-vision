@@ -2,9 +2,6 @@ from models.utilities import *
 from models.subclasses import *
 from models.train_utils import *
 from models.predict import *
-from pycocotools.coco import COCO
-from pycocoevalcap.eval import COCOEvalCap
-import json
 
 import configparser
 
@@ -132,4 +129,4 @@ train(epochs, start_epoch, ckpt_manager,
       image_features_extract_model)
 
 
-print("Done...")
+print("Done training...")

@@ -8,8 +8,6 @@ from pycocotools.coco import COCO
 from pycocoevalcap.eval import COCOEvalCap
 import sys
 import os
-import subprocess
-
 
 optimizer = tf.keras.optimizers.Adam()
 loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
